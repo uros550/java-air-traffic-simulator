@@ -1,0 +1,13 @@
+# Kompajlirani Java kod
+bin/
+*.class
+
+# Eclipse specifični fajlovi (opciono, ali preporučljivo da ne prljaš GitHub)
+.metadata/
+.classpath
+.project
+.settings/
+
+# Privremeni fajlovi sistema
+.DS_Store
+Thumbs.db

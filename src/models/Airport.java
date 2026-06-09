@@ -37,50 +37,41 @@ public class Airport {
 		this.code = code;
 		this.x = x;
 		this.y = y;
-		
 	}
 
-	//getters and setters
+	//getters
 	public String getName() {
 		return name;
 	}
-
-	public void setName(String name) {
-		this.name = name;
+	public String getCode() {
+		return code;
 	}
-
 	public double getX() {
 		return x;
 	}
-
-	public void setX(double x) {
-		this.x = x;
-	}
-
 	public double getY() {
 		return y;
 	}
-
-	public void setY(double y) {
-		this.y = y;
-	}
-
 	public boolean isVisible() {
 		return visible;
 	}
 
+	//setters
+	public void setName(String name) {
+		this.name = name;
+	}
+	public void setX(double x) {
+		this.x = x;
+	}
+	public void setY(double y) {
+		this.y = y;
+	}
 	public void setVisible(boolean visible) {
 		this.visible = visible;
 	}
-
-	public String getCode() {
-		return code;
-	}
-	
 	
 	@Override
 	public String toString() {
 		return name + " [" + code + "] -> (" + x + ", " + y + ")";
 	}
-	
 }

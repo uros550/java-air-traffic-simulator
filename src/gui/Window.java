@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Color;
@@ -13,6 +14,7 @@ import java.awt.Label;
 import java.awt.List;
 import java.awt.Panel;
 import java.awt.TextField;
+import java.awt.Toolkit;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -21,11 +23,14 @@ import models.Airport;
 import models.AviationCenter;
 import models.Flight;
 import services.FileHandler;
+import services.InactivityTimer;
 
 public class Window extends Frame {
 	
     private final AviationCenter aCenter = new AviationCenter();
     private final FileHandler fileHandler = new FileHandler(aCenter);
+    
+    private InactivityTimer iTimer;
     
     //map
     private MapCanvas mapCanvas;
@@ -47,10 +52,12 @@ public class Window extends Frame {
     private final TextField fileField = new TextField(20);
     
     
+    
     public Window() {
     	//start
 		setupWindow();
 		populateWindow();
+		setupInactivityTimer();
 		pack();
         
         setVisible(true);
@@ -77,6 +84,18 @@ public class Window extends Frame {
 		setupEastPanel();
 		setupSouthPanel();
 		refreshTables(); //initially populate with headers
+	}
+
+	private void setupInactivityTimer() {
+		//starting timer
+		iTimer = new InactivityTimer(this);
+		iTimer.start();
+		
+		//connecting to global listener
+		Toolkit.getDefaultToolkit().addAWTEventListener(
+		        e -> iTimer.resetTimer(),
+		        AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK
+		    );
 	}
 
 	private void setupCenterPanel() {

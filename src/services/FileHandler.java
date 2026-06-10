@@ -22,38 +22,20 @@ public class FileHandler {
         this.center = center;
     }
     
-    public void importAirports(String filename) throws IOException, AirportException, FileException {
+    //import public method
+    public void importFile(String filename) throws IOException, AirportException, FileException, FlightException {
     	//check file
         File file = new File(filename);
         if (!file.exists()) {
             throw new IOException("File " + filename + " doesn't exist!");
         }
-
+        
         //check format
         if (filename.toLowerCase().endsWith(".json")) {
-            importAirportsJSON(file);
+            importJSON(file);
         } 
         else if (filename.toLowerCase().endsWith(".csv")){
-            importAirportsCSV(file);
-        }
-        else {
-        	throw new FileException("File " + filename + " isn't JSON or CSV format!");
-        }
-    }
-
-    public void importFlights(String filename) throws IOException, FlightException, FileException {
-    	//check file
-        File file = new File(filename);
-        if (!file.exists()) {
-            throw new IOException("File " + filename + " doesn't exist!");
-        }
-
-        //check format
-        if (filename.toLowerCase().endsWith(".json")) {
-            importFlightsJSON(file);
-        } 
-        else if (filename.toLowerCase().endsWith(".csv")){
-            importFlightsCSV(file);
+            importCSV(file);
         }
         else {
         	throw new FileException("File " + filename + " isn't JSON or CSV format!");
@@ -61,17 +43,31 @@ public class FileHandler {
     }
 
     //CSV format
-    private void importAirportsCSV(File file) throws IOException, AirportException {
+    private void importCSV(File file) throws IOException, AirportException, FlightException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
             //check if header
             boolean isHeader = true;
+            boolean isAirports = false;
 
             while ((line = reader.readLine()) != null) {
             	//remove leading and trailing white spaces
                 line = line.trim();
-                //skip # Airports
-                if (line.isEmpty() || line.startsWith("#")) continue;
+                //skip empty lines
+                if (line.isEmpty()) continue;
+                //get airports or flights
+                if (line.startsWith("#")) {
+                	if (line.equals("# AIRPORTS")) {
+                		isAirports = true;
+                		isHeader = true;
+                		continue;
+                	}
+                	else {
+                		isAirports = false;
+                		isHeader = true;
+                		continue;
+                	}
+                }
                 //skip header
                 if (isHeader) {
                     isHeader = false;
@@ -83,133 +79,105 @@ public class FileHandler {
                     throw new AirportException("Expected 4 columns!");
                 }
 
-                //get info
-                String code = parts[0].trim();
-                String name = parts[1].trim();
-                double x, y;
-                //check numbers
-                try {
-                    x = Double.parseDouble(parts[2].trim());
-                    y = Double.parseDouble(parts[3].trim());
-                } catch (NumberFormatException e) {
-                    throw new AirportException("Coordinates must be valid numbers!");
+                if (isAirports) {
+                	//get info
+                    String code = parts[0].trim();
+                    String name = parts[1].trim();
+                    double x, y;
+                    //check numbers
+                    try {
+                        x = Double.parseDouble(parts[2].trim());
+                        y = Double.parseDouble(parts[3].trim());
+                    } catch (NumberFormatException e) {
+                        throw new AirportException("Coordinates must be valid numbers!");
+                    }
+                    //create airport and add it in aviation center
+                    Airport airport = new Airport(name, code, x, y);
+                    center.addAirport(airport);
                 }
-                //create airport and add it in aviation center
-                Airport airport = new Airport(name, code, x, y);
-                center.addAirport(airport);
+                else {
+                	//get info
+                    String fromCode = parts[0].trim();
+                    String toCode = parts[1].trim();
+                    String takeOffTime = parts[2].trim();
+                    String durationStr = parts[3].trim();
+                    //checking if null is done in Flight constructor 
+                    Airport fromAirport = center.findAirportByCode(fromCode);
+                    Airport toAirport = center.findAirportByCode(toCode);
+
+                    int takeOffTimeInt = parseTimeToMinutes(takeOffTime);
+                    int duration;
+                    //check duration
+                    try {
+                        duration = Integer.parseInt(durationStr);
+                    } catch (NumberFormatException e) {
+                        throw new FlightException("Flight duration must be an integer!");
+                    }
+                    //create flight and add it in aviation center
+                    Flight flight = new Flight(fromAirport, toAirport, takeOffTime, takeOffTimeInt, duration);
+                    center.addFlight(flight);
+                }
             }
         }
     }
 
-    private void importFlightsCSV(File file) throws IOException, FlightException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            String line;
-            //check header
-            boolean isHeader = true;
-
-            while ((line = reader.readLine()) != null) {
-            	//remove leading and trailing white spaces
-                line = line.trim();
-                //skip # Flights
-                if (line.isEmpty() || line.startsWith("#")) continue;
-                //skip header
-                if (isHeader) {
-                    isHeader = false;
-                    continue;
-                }
-
-                String[] parts = line.split(",");
-                if (parts.length != 4) {
-                    throw new FlightException("Expected 4 columns!");
-                }
-
-                //get info
-                String fromCode = parts[0].trim();
-                String toCode = parts[1].trim();
-                String takeOffTime = parts[2].trim();
-                String durationStr = parts[3].trim();
-                //checking if null is done in Flight constructor 
-                Airport fromAirport = center.findAirportByCode(fromCode);
-                Airport toAirport = center.findAirportByCode(toCode);
-
-                int takeOffTimeInt = parseTimeToMinutes(takeOffTime);
-                int duration;
-                //check duration
-                try {
-                    duration = Integer.parseInt(durationStr);
-                } catch (NumberFormatException e) {
-                    throw new FlightException("Flight duration must be an integer!");
-                }
-                //create flight and add it in aviation center
-                Flight flight = new Flight(fromAirport, toAirport, takeOffTime, takeOffTimeInt, duration);
-                center.addFlight(flight);
-            }
-        }
-    }
-
-    //JSON format
-    private void importAirportsJSON(File file) throws IOException, AirportException {
+    
+  //JSON format
+    private void importJSON(File file) throws IOException, AirportException, FlightException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-            	//remove leading and trailing white spaces
+                //remove leading and trailing white spaces
                 line = line.trim();
                 //will get correct lines and first line (which will be skipped)
                 if (!line.startsWith("{") || line.contains("\"airports\"") || line.contains("\"flights\"")) continue;
 
-                //extract method will return value or null 
-                String code = extractJSONValue(line, "code");
-                String name = extractJSONValue(line, "name");
-                String xStr = extractJSONValue(line, "x");
-                String yStr = extractJSONValue(line, "y");
-                if (code == null || name == null || xStr == null || yStr == null) continue;
-                
-                //check coordinates
-                double x, y;
-                try {
-                    x = Double.parseDouble(xStr);
-                    y = Double.parseDouble(yStr);
-                } catch (NumberFormatException e) {
-                    throw new AirportException("Coordinates must be valid numbers!");
+                //check if line belongs to airports
+                if (line.contains("\"code\"")) {
+                    //extract method will return value or null 
+                    String code = extractJSONValue(line, "code");
+                    String name = extractJSONValue(line, "name");
+                    String xStr = extractJSONValue(line, "x");
+                    String yStr = extractJSONValue(line, "y");
+                    if (code == null || name == null || xStr == null || yStr == null) continue;
+                    
+                    //check coordinates
+                    double x, y;
+                    try {
+                        x = Double.parseDouble(xStr);
+                        y = Double.parseDouble(yStr);
+                    } catch (NumberFormatException e) {
+                        throw new AirportException("Coordinates must be valid numbers!");
+                    }
+                    //create airport and add it in aviation center
+                    Airport airport = new Airport(name, code, x, y);
+                    center.addAirport(airport);
+                } 
+                //check if line belongs to flights
+                else if (line.contains("\"from\"")) {
+                    //extract method will return value or null 
+                    String fromCode = extractJSONValue(line, "from");
+                    String toCode = extractJSONValue(line, "to");
+                    String takeOffTime = extractJSONValue(line, "departure");
+                    String durationStr = extractJSONValue(line, "duration");
+                    if (fromCode == null || toCode == null || takeOffTime == null || durationStr == null) continue;
+
+                    //string to airport
+                    Airport fromAirport = center.findAirportByCode(fromCode);
+                    Airport toAirport = center.findAirportByCode(toCode);
+                    //get take off time integer
+                    int takeOffTimeInt = parseTimeToMinutes(takeOffTime);
+                    int duration;
+                    //check duration
+                    try {
+                        duration = Integer.parseInt(durationStr);
+                    } catch (NumberFormatException e) {
+                        throw new FlightException("JSON flight duration must be an integer!");
+                    }
+                    //create flight and add it in aviation center
+                    Flight flight = new Flight(fromAirport, toAirport, takeOffTime, takeOffTimeInt, duration);
+                    center.addFlight(flight);
                 }
-                //create airport and add it in aviation center
-                Airport airport = new Airport(name, code, x, y);
-                center.addAirport(airport);
-            }
-        }
-    }
-
-    private void importFlightsJSON(File file) throws IOException, FlightException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-            	//remove leading and trailing white spaces
-                line = line.trim();
-                //will get correct lines and first line (which will be skipped)
-                if (!line.startsWith("{") || line.contains("\"airports\"") || line.contains("\"flights\"")) continue;
-
-                //extract method will return value or null 
-                String fromCode = extractJSONValue(line, "from");
-                String toCode = extractJSONValue(line, "to");
-                String takeOffTime = extractJSONValue(line, "departure");
-                String durationStr = extractJSONValue(line, "duration");
-                if (fromCode == null || toCode == null || takeOffTime == null || durationStr == null) continue;
-
-                //string to airport
-                Airport fromAirport = center.findAirportByCode(fromCode);
-                Airport toAirport = center.findAirportByCode(toCode);
-                //get take off time integer
-                int takeOffTimeInt = parseTimeToMinutes(takeOffTime);
-                int duration;
-                //check duration
-                try {
-                    duration = Integer.parseInt(durationStr);
-                } catch (NumberFormatException e) {
-                    throw new FlightException("JSON flight duration must be an integer!");
-                }
-                //create flight and add it in aviation center
-                Flight flight = new Flight(fromAirport, toAirport, takeOffTime, takeOffTimeInt, duration);
-                center.addFlight(flight);
             }
         }
     }
@@ -235,7 +203,7 @@ public class FileHandler {
     //parse JSON files
     private String extractJSONValue(String line, String key) {
     	//find key start
-        String searchKey = "\"" + key + "\":";
+        String searchKey = "\"" + key + "\": ";
         int keyIndex = line.indexOf(searchKey);
         if (keyIndex == -1) return null;
         

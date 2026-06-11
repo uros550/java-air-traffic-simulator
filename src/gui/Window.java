@@ -3,6 +3,7 @@ package gui;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Button;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Dimension;
@@ -13,9 +14,11 @@ import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.List;
 import java.awt.Panel;
+import java.awt.ScrollPane;
 import java.awt.TextField;
 import java.awt.Toolkit;
 import java.awt.Dialog.ModalityType;
+import java.awt.event.ItemEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -36,7 +39,7 @@ public class Window extends Frame {
     //map
     private MapCanvas mapCanvas;
     //tables
-    private List airportList;
+    private Panel airportContainerPanel;
     private List flightList;
     
     //airport fields
@@ -120,7 +123,7 @@ public class Window extends Frame {
 
 	private void setupEastPanel() {
 		//create tables
-		airportList = new List();
+		airportContainerPanel = new Panel(new GridLayout(0, 1)); //as panel not list so we can add check box 
 	    flightList = new List();
 	    
 	    //create panel
@@ -169,14 +172,24 @@ public class Window extends Frame {
 		inputPanel.add(flightInput);
 		
 		
-		//font for tables
+		//font for flight table
 		Font tableFont = new Font("Monospaced", Font.PLAIN, 12);
-		airportList.setFont(tableFont);
+		airportContainerPanel.setFont(tableFont);
 		flightList.setFont(tableFont);
+		
+		//add scroll feature
+		ScrollPane airportScrollPane = new ScrollPane();
+		airportScrollPane.add(airportContainerPanel);
+		
+		//header panel
+		Panel headerPanel = new Panel(new BorderLayout());
+		Label headerLabel = new Label(String.format("   %-10s | %-76s | %-16s | %-6s", "CODE", "NAME", "X", "Y"));
+		headerPanel.add(headerLabel, BorderLayout.NORTH);
+		headerPanel.add(airportScrollPane, BorderLayout.CENTER);
 		
 		//create sub-panel for tables
 		Panel listsPanel = new Panel(new GridLayout(2, 1));
-		listsPanel.add(airportList);
+		listsPanel.add(headerPanel);
 		listsPanel.add(flightList);
 		
 		//add both in panel
@@ -298,23 +311,36 @@ public class Window extends Frame {
 	
 	private void refreshTables() {
 		//reset
-		airportList.removeAll();
-		//add header
-		airportList.add(String.format("%-6s | %-35s | %-6s | %-6s", "CODE", "NAME", "X", "Y"));
-		airportList.add("--------------------------------------------------------------");
-		for (Airport a : aCenter.getAirports()) {
-			//show every airport details
-			airportList.add(String.format("%-6s | %-35s | %-6.1f | %-6.1f", a.getCode(), a.getName(), a.getX(), a.getY()));
-		}
+		airportContainerPanel.removeAll();
+		
+	    for (Airport a : aCenter.getAirports()) {
+	    	String labelText = a.toString();
+	    	//check box
+	    	Checkbox cb = new Checkbox(labelText, a.isVisible());
+			Font monoFont = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+	    	cb.setFont(monoFont);
+	    	//check box listener
+	    	cb.addItemListener(e -> {
+	    		//check selected
+	            boolean isChecked = (e.getStateChange() == ItemEvent.SELECTED);
+	            a.setVisible(isChecked);
+	            mapCanvas.repaint();
+	        });
+	    	//add to table
+	    	airportContainerPanel.add(cb);
+	    }
+	    airportContainerPanel.revalidate();
+	    airportContainerPanel.repaint();
+		
 		
 		//reset
 		flightList.removeAll();
 		//add header
 		flightList.add(String.format("%-6s | %-6s | %-10s | %-10s", "FROM", "TO", "TAKEOFF", "DUR(m)"));
-		flightList.add("------------------------------------------");
+		flightList.add("---------------------------------------");
 		for (Flight f : aCenter.getFlights()) {
 			//show every flight details
-			flightList.add(String.format("%-6s | %-6s | %-10s | %-10d", f.getFrom().getCode(), f.getTo().getCode(), f.getTakeOffTime(), f.getFlightDurMin()));
+			flightList.add(f.toString());
 		}
 	}
 

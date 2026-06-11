@@ -72,6 +72,6 @@ public class Airport {
 	
 	@Override
 	public String toString() {
-		return name + " [" + code + "] -> (" + x + ", " + y + ")";
+		return String.format("%-6s | %-35s | %-6.1f | %-6.1f", code, name, x, y);
 	}
 }

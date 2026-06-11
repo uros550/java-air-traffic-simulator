@@ -44,6 +44,9 @@ public class MapCanvas extends Canvas {
 		
 		//check if any airport is clicked
 		for (Airport a : aCenter.getAirports()) {
+			//check visibility
+			if (!a.isVisible()) continue;
+			//calculate coordinates
             int pixelX = calculatePixelX(a.getX());
             int pixelY = calculatePixelY(a.getY());
 
@@ -113,6 +116,8 @@ public class MapCanvas extends Canvas {
 		if (aCenter.getAirports().isEmpty()) return;
 		//draw every airport
 		for (Airport a : aCenter.getAirports()) {
+			//check visibility
+			if (!a.isVisible()) continue;
 			//get actual coordinates
 			int pixelX = calculatePixelX(a.getX());
 			int pixelY = calculatePixelY(a.getY());

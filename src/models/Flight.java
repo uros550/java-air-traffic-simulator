@@ -79,6 +79,6 @@ public class Flight {
     
     @Override
     public String toString() {
-        return "Flight: " + from.getCode() + " -> " + to.getCode() + " | TakeOff: " + takeOffTime + " (" + takeOffTimeInt + "m) | Duration: " + flightDurMin + "m";
+        return String.format("%-6s | %-6s | %-10s | %-10d", from.getCode(), to.getCode(), takeOffTime, flightDurMin);
     }
 }

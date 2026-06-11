@@ -30,6 +30,7 @@ public class Window extends Frame {
     private final AviationCenter aCenter = new AviationCenter();
     private final FileHandler fileHandler = new FileHandler(aCenter);
     
+    //timers
     private InactivityTimer iTimer;
     
     //map
@@ -66,7 +67,7 @@ public class Window extends Frame {
 	private void setupWindow() {
 		//classic setters
         setTitle("Airspace");
-		setBounds(500, 200, 950, 550);
+		setBounds(-10, 90, 950, 550);
         setResizable(false);
         
         //x -> closes the program
@@ -100,12 +101,11 @@ public class Window extends Frame {
 
 	private void setupCenterPanel() {
 		//create map
-    	mapCanvas = new MapCanvas(aCenter);
+    	mapCanvas = new MapCanvas(this, aCenter);
 
     	//configure map
         mapCanvas.setBackground(Color.BLACK);
-		int dimensions = Math.min(getWidth(), getHeight()) * 5 / 6;
-        mapCanvas.setPreferredSize(new Dimension(dimensions, dimensions));
+        mapCanvas.setPreferredSize(new Dimension(180*7, 90*7));
         
     	//create panel
 		Panel centerPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -301,7 +301,7 @@ public class Window extends Frame {
 		airportList.removeAll();
 		//add header
 		airportList.add(String.format("%-6s | %-35s | %-6s | %-6s", "CODE", "NAME", "X", "Y"));
-		airportList.add("-----------------------------------------------------------");
+		airportList.add("--------------------------------------------------------------");
 		for (Airport a : aCenter.getAirports()) {
 			//show every airport details
 			airportList.add(String.format("%-6s | %-35s | %-6.1f | %-6.1f", a.getCode(), a.getName(), a.getX(), a.getY()));
@@ -338,5 +338,9 @@ public class Window extends Frame {
 	    dialog.pack(); 
 	    dialog.setLocationRelativeTo(this);
 	    dialog.setVisible(true);
+	}
+	
+	public InactivityTimer getInactivityTimer() {
+	    return this.iTimer;
 	}
 }

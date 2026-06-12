@@ -4,6 +4,7 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -152,6 +153,32 @@ public class MapCanvas extends Canvas {
 	private int calculatePixelY(double y) {
 	    double stepY = (double) getHeight() / 180.0;
 	    return (int) ((90 - y) * stepY);
+	}
+	
+	
+	
+	//OPTIMIZATION 
+	private Image offscreenImage = null;
+	private Graphics offscreenGraphics = null;
+
+	@Override
+	public void update(Graphics g) {
+		//if image does not exist in memory or window changed its size
+	    if (offscreenImage == null || offscreenImage.getWidth(this) != getWidth() || offscreenImage.getHeight(this) != getHeight()) {
+	        //create new
+	    	offscreenImage = createImage(getWidth(), getHeight());
+	        offscreenGraphics = offscreenImage.getGraphics();
+	    }
+
+	    //clear off screen background
+	    offscreenGraphics.setColor(getBackground());
+	    offscreenGraphics.fillRect(0, 0, getWidth(), getHeight());
+
+	    //paint off screen
+	    paint(offscreenGraphics);
+
+	    //transport already painted onto real screen
+	    g.drawImage(offscreenImage, 0, 0, this);
 	}
     
 }

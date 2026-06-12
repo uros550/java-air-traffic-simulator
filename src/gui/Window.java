@@ -36,8 +36,16 @@ public class Window extends Frame {
     //timers
     private InactivityTimer iTimer;
     
+    //simulation
+    private int simMinutes = 0;
+    private volatile boolean simRunning = false;
+    private Thread simThread = null;
+    private Label simTimeLabel;
+    private Button btnStart, btnPause, btnReset;
+    
     //map
     private MapCanvas mapCanvas;
+    
     //tables
     private Panel airportContainerPanel;
     private List flightList;
@@ -272,15 +280,40 @@ public class Window extends Frame {
 
 	private void setupSouthPanel() {
 		//create panel
-		Panel southPanel = new Panel(new FlowLayout(FlowLayout.LEFT));
+		Panel southPanel = new Panel(new BorderLayout());
 		southPanel.setBackground(Color.LIGHT_GRAY);
 		
+		//create sub-panel for file input
+		Panel fileInput = new Panel(new FlowLayout(FlowLayout.RIGHT));	
 		//filename label
-		southPanel.add(new Label("Import CSV/JSON File:"));
-		southPanel.add(fileField);
+		fileInput.add(new Label("Import CSV/JSON File:"));
+		fileInput.add(fileField);
 		//load button
 		Button loadBtn = new Button("Load File");
-		southPanel.add(loadBtn);
+		fileInput.add(loadBtn);
+		
+		//create sub-panel for simulation time
+		Panel simPanel = new Panel(new FlowLayout(FlowLayout.CENTER));
+		simPanel.add(new Label("Time: "));
+		//add time label
+		simTimeLabel = new Label("00:00");
+		Font timeFont = new Font("Arial", Font.BOLD, 15);
+		simTimeLabel.setFont(timeFont);
+		simPanel.add(simTimeLabel);
+		//buttons
+		btnStart = new Button("Start");
+		btnPause = new Button("Pause");
+		btnReset = new Button("Reset");
+		//initially can not be paused
+		btnPause.setEnabled(false);
+		//add buttons
+		simPanel.add(btnStart);
+		simPanel.add(btnPause);
+		simPanel.add(btnReset);
+		
+		//add sub-panels in panel
+		southPanel.add(simPanel);
+		southPanel.add(fileInput, BorderLayout.EAST);
 		
 		//add panel in south part of window
 		add(southPanel, BorderLayout.SOUTH);
@@ -305,10 +338,102 @@ public class Window extends Frame {
 				errorDialog(ex.getMessage());
 			}
 		});
+		
+		//start button listener
+		btnStart.addActionListener(e -> {
+		    if (simRunning) return; //already running
+
+		    //pause inactivity timer
+		    if (iTimer != null) {
+		        iTimer.setPaused(true);
+		    }
+
+		    //setting buttons
+		    simRunning = true;
+		    btnStart.setEnabled(false);	
+		    btnPause.setEnabled(true);	
+		    btnReset.setEnabled(false); //can not reset while active
+
+		    //thread for simulation
+		    simThread = new Thread(() -> {
+		        try {
+		            while (simRunning) {
+		                
+		                Thread.sleep(200); 
+
+		                //200ms -> 2mins
+		                simMinutes += 2;
+
+		                //if 24h pass, reset new day
+		                if (simMinutes >= 1440) {
+		                    simMinutes = 0;
+		                }
+
+		                //get formatted time
+		                String sTime = timeFormat(simMinutes);
+		                //update time UI
+		                simTimeLabel.setText(sTime);
+		            }
+		        } catch (InterruptedException ex) {}
+		    });
+		    //start simulation thread
+		    simThread.start();
+		});
+		
+		//pause button listener
+		btnPause.addActionListener(e -> {
+			simRunning = false;
+			
+			//stop simThread
+			if (simThread != null) {
+				simThread.interrupt();
+			}
+			
+			//start inactivity timer
+			if (iTimer != null) {
+				iTimer.setPaused(false);
+			}
+			
+			//setting buttons
+			btnStart.setEnabled(true);
+			btnPause.setEnabled(false);
+			btnReset.setEnabled(true);
+		});
+		
+		//reset button listener
+		btnReset.addActionListener(e -> {
+			simRunning = false;
+			
+			//stop simThread
+			if (simThread != null) {
+				simThread.interrupt();
+			}
+			
+			//start inactivity timer
+			if (iTimer != null) {
+				iTimer.setPaused(false);
+			}
+			
+			//reset time
+			simMinutes = 0;
+			simTimeLabel.setText("00:00");
+			
+			//setting buttons
+			btnStart.setEnabled(true);
+		    btnPause.setEnabled(false);
+		    btnReset.setEnabled(false);
+		});
 	}
 	
 	//helper methods
 	
+	private String timeFormat(int mins) {
+		int h = simMinutes / 60;
+        int m = simMinutes % 60;
+        String formattedTime = String.format("%02d:%02d", h, m);
+        return formattedTime;
+	}
+
 	private void refreshTables() {
 		//reset
 		airportContainerPanel.removeAll();

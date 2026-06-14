@@ -1,5 +1,8 @@
 package models;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 import exceptions.AirportException;
 
 public class Airport {
@@ -9,6 +12,10 @@ public class Airport {
 	private final String code;
 	private double x, y;
 	private boolean visible = true;
+	
+	//queue
+	private Queue<Flight> waitingQueue = new LinkedList<>();
+	private int nextAvailableSlot = 0;
 	
 	public Airport(String name, String code, double x, double y) throws AirportException {
 		//check name
@@ -38,6 +45,12 @@ public class Airport {
 		this.x = x;
 		this.y = y;
 	}
+	
+	//for reset button
+	public void resetQueueState() {
+	    this.waitingQueue.clear();
+	    this.nextAvailableSlot = 0;
+	}
 
 	//getters
 	public String getName() {
@@ -55,6 +68,12 @@ public class Airport {
 	public boolean isVisible() {
 		return visible;
 	}
+	public Queue<Flight> getWaitingQueue() { 
+		return waitingQueue; 
+	}
+	public int getNextAvailableSlot() { 
+		return nextAvailableSlot; 
+	}
 
 	//setters
 	public void setName(String name) {
@@ -68,6 +87,9 @@ public class Airport {
 	}
 	public void setVisible(boolean visible) {
 		this.visible = visible;
+	}
+	public void setNextAvailableSlot(int nextAvailableSlot) { 
+		this.nextAvailableSlot = nextAvailableSlot;
 	}
 	
 	@Override

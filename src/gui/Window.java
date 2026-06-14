@@ -21,6 +21,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 
 import models.Airport;
 import models.AviationCenter;
@@ -32,6 +33,7 @@ public class Window extends Frame {
 	
     private final AviationCenter aCenter = new AviationCenter();
     private final FileHandler fileHandler = new FileHandler(aCenter);
+    private java.util.List<Flight> activeFlights = new ArrayList<>();
     
     //timers
     private InactivityTimer iTimer;
@@ -361,18 +363,43 @@ public class Window extends Frame {
 		                
 		                Thread.sleep(200); 
 
-		                //200ms -> 2mins
-		                simMinutes += 2;
+		                //TIME
+		                simMinutes += 2; //200ms -> 2mins
 
 		                //if 24h pass, reset new day
 		                if (simMinutes >= 1440) {
 		                    simMinutes = 0;
-		                }
+		                }	                
 
 		                //get formatted time
 		                String sTime = timeFormat(simMinutes);
 		                //update time UI
 		                simTimeLabel.setText(sTime);
+		                
+		                //FLIGHTS TO TAKE OFF
+		                for (Flight f : aCenter.getFlights()) {
+		                	//get rounded take off time
+		                	int virtualTakeOffTime = roundToNextEven(f.getTakeOffTimeInt());
+		                	
+		                	if (!f.hasTakenOff() && virtualTakeOffTime == simMinutes) {
+		                        f.getFrom().getWaitingQueue().add(f); //add in origin airport queue
+		                    }
+		                }
+		                
+		                for (Airport a : aCenter.getAirports()) {
+		                	if (!a.getWaitingQueue().isEmpty() && simMinutes >= a.getNextAvailableSlot()) {
+		                		Flight flyingPlane = a.getWaitingQueue().poll();
+		                        //plane took off
+		                        flyingPlane.setTookOff(true); 
+		                        
+		                        activeFlights.add(flyingPlane);
+		                        
+		                        //update next 10min slot
+		                        a.setNextAvailableSlot(simMinutes + 10);
+		                        
+		                        System.out.println("Poletanje! Let sa " + a.getCode() + " je uspešno poleteo u " + simMinutes + " wanted TakeOffTime " + flyingPlane.getTakeOffTime());
+		                	}
+		                }
 		            }
 		        } catch (InterruptedException ex) {}
 		    });
@@ -414,6 +441,17 @@ public class Window extends Frame {
 				iTimer.setPaused(false);
 			}
 			
+			//no active flights
+			activeFlights.clear();
+			//reset airport queues
+			for (Airport a : aCenter.getAirports()) {
+				a.resetQueueState();
+			}
+			//reset flights
+			for (Flight f : aCenter.getFlights()) { 
+		        f.setTookOff(false);
+		    }
+			
 			//reset time
 			simMinutes = 0;
 			simTimeLabel.setText("00:00");
@@ -426,6 +464,13 @@ public class Window extends Frame {
 	}
 	
 	//helper methods
+	
+	private int roundToNextEven(int minutes) {
+	    if (minutes % 2 != 0) {
+	        return minutes + 1;
+	    }
+	    return minutes;
+	}
 	
 	private String timeFormat(int mins) {
 		int h = simMinutes / 60;

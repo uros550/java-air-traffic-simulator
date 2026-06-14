@@ -391,15 +391,48 @@ public class Window extends Frame {
 		                		Flight flyingPlane = a.getWaitingQueue().poll();
 		                        //plane took off
 		                        flyingPlane.setTookOff(true); 
+		                        flyingPlane.setActualTakeOffTime(simMinutes);
 		                        
+		                        //add to active airplanes
 		                        activeFlights.add(flyingPlane);
 		                        
 		                        //update next 10min slot
 		                        a.setNextAvailableSlot(simMinutes + 10);
 		                        
-		                        System.out.println("Poletanje! Let sa " + a.getCode() + " je uspešno poleteo u " + simMinutes + " wanted TakeOffTime " + flyingPlane.getTakeOffTime());
+		                        //System.out.println("Poletanje! Let sa " + a.getCode() + " je uspešno poleteo u " + simMinutes + " wanted TakeOffTime " + flyingPlane.getTakeOffTime());
 		                	}
 		                }
+		                
+		                //update active airplanes
+		                for (Flight f : activeFlights) {
+		                	int passedTime = simMinutes - f.getActualTakeOffTime();
+		                	
+		                	//percentage of flight passed
+		                	double t = (double) passedTime / f.getFlightDurMin();
+		                	if (t > 1.0) t = 1.0;
+		                	
+		                	//get from and to coordinates
+		                	double xOrigin = f.getFrom().getX();
+		                	double yOrigin = f.getFrom().getY();
+		                	double xDestination = f.getTo().getX();
+		                	double yDestination = f.getTo().getY();
+		                	
+		                	//get current coordinates
+		                	int currX = (int) (xOrigin + t * (xDestination - xOrigin));
+		                	int currY = (int) (yOrigin + t * (yDestination - yOrigin));
+		                	
+		                	//setting coordinates
+		                	f.setCurrentX(currX);
+		                	f.setCurrentY(currY);
+		                	
+		                	//System.out.println("Flight " + f.getActualTakeOffTime() + " coordinates: " + f.getCurrentX() + ", " + f.getCurrentY() + " to airport: " + f.getFrom().getName() + " to airport: " + f.getTo().getName());
+		                	//System.out.println("From airport: " + f.getFrom().getX() + ", " + f.getFrom().getY() + " to airport: " + f.getTo().getX() + ", " + f.getTo().getY());
+		                }
+		                
+		                //clearing airplanes that landed
+		                activeFlights.removeIf(f -> 
+		                	(simMinutes - f.getActualTakeOffTime()) >= f.getFlightDurMin()
+		                );
 		            }
 		        } catch (InterruptedException ex) {}
 		    });

@@ -1,10 +1,10 @@
 {
   "airports": [
-    { "code": "LHR", "name": "London Heathrow", "x": 0, "y": 51 },
-    { "code": "BEG", "name": "Belgrade Nikola Tesla", "x": 10, "y": 45 }
+    { "code": "LHR", "name": "London Heathrow", "x": 0, "y": 80 },
+    { "code": "BEG", "name": "Belgrade Nikola Tesla", "x": -10, "y": -45 }
   ],
   "flights": [
-    { "from": "BEG", "to": "LHR", "departure": "17:10", "duration": 170 },
+    { "from": "BEG", "to": "LHR", "departure": "00:10", "duration": 100 },
     { "from": "LHR", "to": "BEG", "departure": "11:30", "duration": 330 }
   ]
 }

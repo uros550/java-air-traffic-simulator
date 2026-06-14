@@ -12,8 +12,8 @@ public class Flight {
     private int flightDurMin;
     private boolean tookOff = false;
     private int actualTakeOffTime = -1;
-    private int currentX;
-    private int currentY;
+    private double currentX;
+    private double currentY;
     
     public Flight(Airport from, Airport to, String takeOffTime, int takeOffTimeInt, int flightDurMin) throws FlightException {
     	//check airports
@@ -61,10 +61,10 @@ public class Flight {
     public int getActualTakeOffTime() {
 		return actualTakeOffTime;
 	}
-	public int getCurrentX() {
+	public double getCurrentX() {
 		return currentX;
 	}
-	public int getCurrentY() {
+	public double getCurrentY() {
 		return currentY;
 	}
 
@@ -90,10 +90,10 @@ public class Flight {
 	public void setActualTakeOffTime(int actualTakeOffTime) {
 		this.actualTakeOffTime = actualTakeOffTime;
 	}
-	public void setCurrentX(int currentX) {
+	public void setCurrentX(double currentX) {
 		this.currentX = currentX;
 	}
-	public void setCurrentY(int currentY) {
+	public void setCurrentY(double currentY) {
 		this.currentY = currentY;
 	}
     

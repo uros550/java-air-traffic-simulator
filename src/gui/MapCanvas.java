@@ -7,9 +7,11 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import models.Airport;
 import models.AviationCenter;
+import models.Flight;
 
 public class MapCanvas extends Canvas {
     
@@ -141,8 +143,21 @@ public class MapCanvas extends Canvas {
 	}
 	
 	private void drawAirplanes(Graphics g) {
-		// TODO Auto-generated method stub
+		//save old color
+		Color prevColor = g.getColor();
 		
+		//draw every active flight
+		for (Flight f : owner.getActiveFlights()) {
+			//calculate real coordinates
+			int pixelX = calculatePixelX(f.getCurrentX());
+			int pixelY = calculatePixelY(f.getCurrentY());
+			//draw plane
+			g.setColor(Color.BLUE);
+            g.fillOval(pixelX - 5, pixelY - 5, 10, 10);
+		}
+		
+		//restore old color
+		g.setColor(prevColor);
 	}
 
 	private int calculatePixelX(double x) {

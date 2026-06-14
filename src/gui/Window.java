@@ -418,8 +418,8 @@ public class Window extends Frame {
 		                	double yDestination = f.getTo().getY();
 		                	
 		                	//get current coordinates
-		                	int currX = (int) (xOrigin + t * (xDestination - xOrigin));
-		                	int currY = (int) (yOrigin + t * (yDestination - yOrigin));
+		                	double currX = xOrigin + t * (xDestination - xOrigin);
+		                	double currY = yOrigin + t * (yDestination - yOrigin);
 		                	
 		                	//setting coordinates
 		                	f.setCurrentX(currX);
@@ -433,6 +433,8 @@ public class Window extends Frame {
 		                activeFlights.removeIf(f -> 
 		                	(simMinutes - f.getActualTakeOffTime()) >= f.getFlightDurMin()
 		                );
+		                
+		                mapCanvas.repaint();
 		            }
 		        } catch (InterruptedException ex) {}
 		    });
@@ -493,6 +495,9 @@ public class Window extends Frame {
 			btnStart.setEnabled(true);
 		    btnPause.setEnabled(false);
 		    btnReset.setEnabled(false);
+		    
+		    //clear map
+		    mapCanvas.repaint();
 		});
 	}
 	
@@ -572,4 +577,10 @@ public class Window extends Frame {
 	public InactivityTimer getInactivityTimer() {
 	    return this.iTimer;
 	}
+
+	public java.util.List<Flight> getActiveFlights() {
+		return activeFlights;
+	}
+	
+	
 }
